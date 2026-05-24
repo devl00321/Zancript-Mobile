@@ -1,98 +1,213 @@
-import React from 'react';
-import { ActivityIndicator, Pressable, PressableProps, Text, View } from 'react-native';
-import { twMerge } from 'tailwind-merge';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import React, { useState } from 'react';
+import { Pressable, Text, View, ActivityIndicator, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Check } from 'lucide-react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
+import { TOKENS } from '../../constants/tokens';
+
+// Helper to determine active theme (using hardcoded dark for now as per prompt default)
+const activeTheme = TOKENS.colors.dark;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export interface ButtonProps extends PressableProps {
-  className?: string;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline' | 'security';
-  size?: 'sm' | 'md' | 'lg' | 'icon';
-  isLoading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  children?: React.ReactNode;
+export type ButtonState = 'default' | 'loading' | 'success' | 'error';
+
+interface ButtonProps {
+  label: string;
+  icon?: React.ReactNode;
+  onPress?: () => void;
+  status?: ButtonState;
+  style?: StyleProp<ViewStyle>;
+  fullWidth?: boolean;
 }
 
-const Button = React.forwardRef<View, ButtonProps>(({
-  className,
-  variant = 'primary',
-  size = 'md',
-  isLoading,
-  leftIcon,
-  rightIcon,
-  children,
-  ...props
-}, ref) => {
+export function PrimaryButton({ label, icon, onPress, status = 'default', style, fullWidth = true }: ButtonProps) {
   const scale = useSharedValue(1);
+  const translateX = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }]
+    transform: [{ scale: scale.value }, { translateX: translateX.value }],
   }));
 
-  const handlePressIn = () => { scale.value = withSpring(0.98); };
-  const handlePressOut = () => { scale.value = withSpring(1); };
-
-  const variants: Record<string, string> = {
-    primary: 'bg-primary-accent border border-transparent',
-    secondary: 'bg-surface-elevated border border-border',
-    ghost: 'bg-transparent border border-border',
-    danger: 'bg-status-danger',
-    outline: 'bg-transparent border border-primary-accent',
-    security: 'bg-primary-bg border border-primary-accent',
+  const handlePressIn = () => {
+    scale.value = withSpring(0.98, { damping: 20, stiffness: 300 });
   };
 
-  const textVariants: Record<string, string> = {
-    primary: 'text-primary-bg font-mono tracking-widest uppercase',
-    secondary: 'text-text-primary',
-    ghost: 'text-text-secondary',
-    danger: 'text-white',
-    outline: 'text-primary-accent',
-    security: 'text-primary-accent',
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 20, stiffness: 300 });
   };
 
-  const sizes: Record<string, string> = {
-    sm: 'px-3 py-1.5',
-    md: 'px-4 py-2',
-    lg: 'px-6 py-3',
-    icon: 'p-2',
-  };
+  React.useEffect(() => {
+    if (status === 'error') {
+      translateX.value = withSequence(
+        withTiming(-4, { duration: 50 }),
+        withTiming(4, { duration: 50 }),
+        withTiming(-4, { duration: 50 }),
+        withTiming(4, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      );
+    }
+  }, [status]);
 
-  const textSizes: Record<string, string> = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base',
-    icon: '',
-  };
+  const isSuccess = status === 'success';
+  const isLoading = status === 'loading';
 
   return (
     <AnimatedPressable
-      ref={ref}
+      onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={animatedStyle}
-      className={twMerge(
-        'relative flex-row items-center justify-center rounded-md',
-        variants[variant],
-        sizes[size],
-        (isLoading || props.disabled) ? 'opacity-50' : '',
-        className
-      )}
-      disabled={isLoading || props.disabled}
-      {...props}
+      disabled={isLoading || isSuccess}
+      style={[
+        styles.primaryBase,
+        fullWidth && { width: '100%' },
+        isSuccess && styles.primarySuccess,
+        status === 'error' && styles.primaryError,
+        animatedStyle,
+        style,
+      ]}
     >
-      {isLoading && <ActivityIndicator color="currentColor" className="mr-2" size="small" />}
-      {!isLoading && leftIcon && <View className="mr-2">{leftIcon}</View>}
-      {typeof children === 'string' ? (
-        <Text className={twMerge(textVariants[variant], textSizes[size])}>{children}</Text>
-      ) : (
-        children
+      {({ pressed }) => (
+        <View style={[styles.contentRow, { opacity: pressed && status === 'default' ? 0.88 : 1 }]}>
+          {isLoading ? (
+            <ActivityIndicator color={activeTheme.void} size="small" style={styles.iconMargin} />
+          ) : isSuccess ? (
+            <Check color={activeTheme.acc} size={16} style={styles.iconMargin} />
+          ) : (
+            icon && <View style={styles.iconMargin}>{icon}</View>
+          )}
+          <Text style={[styles.primaryText, isSuccess && styles.primaryTextSuccess]}>
+            {isLoading ? 'PLEASE WAIT...' : isSuccess ? 'VERIFIED' : label}
+          </Text>
+        </View>
       )}
-      {!isLoading && rightIcon && <View className="ml-2">{rightIcon}</View>}
     </AnimatedPressable>
   );
-});
+}
 
-Button.displayName = 'Button';
-export default Button;
+export function GhostButton({ label, icon, onPress, style, fullWidth = true }: ButtonProps) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => (scale.value = withSpring(0.98))}
+      onPressOut={() => (scale.value = withSpring(1))}
+      style={({ pressed }) => [
+        styles.ghostBase,
+        fullWidth && { width: '100%' },
+        pressed && styles.ghostPressed,
+        animatedStyle,
+        style,
+      ]}
+    >
+      {({ pressed }) => (
+        <View style={styles.contentRow}>
+          {icon && <View style={styles.iconMargin}>{icon}</View>}
+          <Text style={[styles.ghostText, pressed && styles.ghostTextPressed]}>{label}</Text>
+        </View>
+      )}
+    </AnimatedPressable>
+  );
+}
+
+export function DangerButton({ label, icon, onPress, style, fullWidth = true }: ButtonProps) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={() => (scale.value = withSpring(0.98))}
+      onPressOut={() => (scale.value = withSpring(1))}
+      style={({ pressed }) => [
+        styles.dangerBase,
+        fullWidth && { width: '100%' },
+        pressed && { backgroundColor: 'rgba(255, 51, 85, 0.1)' },
+        animatedStyle,
+        style,
+      ]}
+    >
+      <View style={styles.contentRow}>
+        {icon && <View style={styles.iconMargin}>{icon}</View>}
+        <Text style={styles.dangerText}>{label}</Text>
+      </View>
+    </AnimatedPressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconMargin: {
+    marginRight: 8,
+  },
+  primaryBase: {
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: activeTheme.acc,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primarySuccess: {
+    backgroundColor: activeTheme.accD,
+    borderWidth: 1,
+    borderColor: activeTheme.accB,
+  },
+  primaryError: {
+    borderWidth: 1,
+    borderColor: activeTheme.danger,
+  },
+  primaryText: {
+    fontFamily: TOKENS.fonts.mono,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1.3,
+    color: activeTheme.void,
+    fontWeight: '500',
+  },
+  primaryTextSuccess: {
+    color: activeTheme.acc,
+  },
+  ghostBase: {
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: activeTheme.bdr,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ghostPressed: {
+    borderColor: activeTheme.bdrA,
+  },
+  ghostText: {
+    fontFamily: TOKENS.fonts.mono,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1.3,
+    color: activeTheme.tx2,
+  },
+  ghostTextPressed: {
+    color: activeTheme.tx1,
+  },
+  dangerBase: {
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 51, 85, 0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dangerText: {
+    fontFamily: TOKENS.fonts.mono,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: activeTheme.danger,
+  },
+});

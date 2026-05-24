@@ -1,37 +1,31 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
+  content: ["./src/app/**/*.{js,jsx,ts,tsx}", "./src/components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        primary: {
-          bg: '#0B1120',
-          accent: '#3B82F6',
-        },
-        surface: {
-          secondary: '#111827',
-          elevated: '#1E293B',
-        },
-        security: '#06B6D4',
-        status: {
-          success: '#10B981',
-          warning: '#F59E0B',
-          danger: '#EF4444',
-        },
-        border: {
-          DEFAULT: 'rgba(255,255,255,0.06)'
-        },
-        text: {
-          primary: '#F8FAFC',
-          secondary: '#94A3B8',
-        }
+        void: 'var(--void)',
+        surf: 'var(--surf)',
+        raised: 'var(--raised)',
+        overlay: 'var(--overlay)',
+        bdr: 'var(--bdr)',
+        'bdr-a': 'var(--bdr-a)',
+        tx1: 'var(--tx1)',
+        tx2: 'var(--tx2)',
+        tx3: 'var(--tx3)',
+        acc: 'var(--acc)',
+        'acc-d': 'var(--acc-d)',
+        'acc-b': 'var(--acc-b)',
+        danger: 'var(--danger)',
+        warn: 'var(--warn)',
+        info: 'var(--info)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+        disp: ['"Instrument Serif"', 'Georgia', 'serif'],
       },
     },
   },

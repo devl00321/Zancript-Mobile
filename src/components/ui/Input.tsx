@@ -1,62 +1,90 @@
-import React, { forwardRef } from 'react';
-import { View, Text, TextInput, TextInputProps } from 'react-native';
-import { twMerge } from 'tailwind-merge';
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { TOKENS } from '../../constants/tokens';
 
-export interface InputProps extends TextInputProps {
-  label?: string;
-  error?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  className?: string;
+const activeTheme = TOKENS.colors.dark;
+
+interface SecureInputProps extends TextInputProps {
+  label: string;
+  hint?: string;
+  containerStyle?: object;
 }
 
-const Input = forwardRef<TextInput, InputProps>(({
-  className,
-  label,
-  error,
-  leftIcon,
-  rightIcon,
-  ...props
-}, ref) => {
+export function SecureInput({ label, hint, containerStyle, onFocus, onBlur, ...props }: SecureInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
-    <View className="w-full">
-      {label ? (
-        <Text className="text-xs font-medium text-text-secondary mb-1.5 uppercase tracking-widest">
-          {label}
-        </Text>
-      ) : null}
-      <View className="relative justify-center">
-        {leftIcon ? (
-          <View className="absolute left-3 z-10">
-            {leftIcon}
-          </View>
-        ) : null}
+    <View style={containerStyle}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={[styles.inputContainer, isFocused && styles.inputContainerFocused]}>
         <TextInput
-          ref={ref}
-          placeholderTextColor="rgba(148, 163, 184, 0.5)"
-          className={twMerge(
-            'flex h-12 w-full rounded-md border border-border bg-surface-secondary/50 px-3 text-sm text-text-primary',
-            leftIcon && 'pl-10',
-            rightIcon && 'pr-10',
-            error && 'border-status-danger text-status-danger',
-            className
-          )}
+          style={styles.input}
+          placeholderTextColor={activeTheme.tx3}
+          onFocus={(e) => {
+            setIsFocused(true);
+            if (onFocus) onFocus(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            if (onBlur) onBlur(e);
+          }}
           {...props}
         />
-        {rightIcon ? (
-          <View className="absolute right-3 z-10">
-            {rightIcon}
-          </View>
-        ) : null}
       </View>
-      {error ? (
-        <Text className="mt-1.5 text-xs text-status-danger">
-          {error}
-        </Text>
-      ) : null}
+      {hint && <Text style={styles.hint}>{hint}</Text>}
     </View>
   );
-});
+}
 
-Input.displayName = 'Input';
-export default Input;
+export function SectionLabel({ text, style }: { text: string; style?: object }) {
+  return <Text style={[styles.sectionLabel, style]}>{text}</Text>;
+}
+
+const styles = StyleSheet.create({
+  label: {
+    fontFamily: TOKENS.fonts.mono,
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: activeTheme.tx3,
+    marginBottom: 6,
+  },
+  inputContainer: {
+    backgroundColor: activeTheme.void,
+    borderWidth: 1,
+    borderColor: activeTheme.bdr,
+    borderRadius: 7,
+    height: 48,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  inputContainerFocused: {
+    borderColor: activeTheme.accB,
+    shadowColor: activeTheme.acc,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  input: {
+    fontFamily: TOKENS.fonts.sans,
+    fontSize: 15,
+    color: activeTheme.tx1,
+    height: '100%',
+  },
+  hint: {
+    fontFamily: TOKENS.fonts.sans,
+    fontSize: 10,
+    color: activeTheme.tx3,
+    marginTop: 6,
+  },
+  sectionLabel: {
+    fontFamily: TOKENS.fonts.mono,
+    fontSize: 9,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: activeTheme.tx3,
+    marginTop: 16,
+    marginBottom: 10,
+  },
+});

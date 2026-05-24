@@ -30,7 +30,7 @@ const SecureInput = forwardRef<TextInput, SecureInputProps>(({
           {label}
         </Text>
       ) : null}
-      <View className="relative justify-center rounded-md overflow-hidden border border-border bg-[#0B1120]">
+      <View className="relative justify-center w-full">
         {leftIcon ? (
           <View className="absolute left-3 z-10">
             {leftIcon}
@@ -41,10 +41,11 @@ const SecureInput = forwardRef<TextInput, SecureInputProps>(({
           secureTextEntry={isSecure}
           placeholderTextColor="rgba(148, 163, 184, 0.5)"
           className={twMerge(
-            'flex h-12 w-full px-4 text-sm text-text-primary font-sans',
+            'flex h-12 w-full rounded-md border border-border bg-surface-base px-4 text-sm text-text-primary font-mono focus:border-accent-security focus:border-2 overflow-hidden',
             leftIcon && 'pl-10',
             'pr-12',
             error && 'border-status-danger',
+            showEntropy && 'pb-1',
             className
           )}
           {...props}
@@ -61,7 +62,7 @@ const SecureInput = forwardRef<TextInput, SecureInputProps>(({
         </TouchableOpacity>
 
         {showEntropy && (
-          <View className="absolute bottom-0 left-0 h-0.5 bg-primary-accent/20 w-full">
+          <View className="absolute bottom-0 left-0 h-1 bg-surface-raised w-full overflow-hidden rounded-b-md">
             <View
               className={twMerge(
                 'h-full',
