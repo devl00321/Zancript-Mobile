@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CloudUpload, Plus, Lock, LayoutGrid, Globe, CheckCircle } from 'lucide-react-native';
 import { TOKENS } from '../../constants/tokens';
 import { TopHeader } from '../../components/layout/TopHeader';
@@ -8,10 +9,13 @@ import { SectionLabel } from '../../components/ui/Input';
 import { FileTypeBadge } from '../../components/ui/Badge';
 import { PrimaryButton } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
+import { useVaultStore } from '../../store/vaultStore';
 
 const activeTheme = TOKENS.colors.dark;
 
 export default function UploadScreen() {
+  const insets = useSafeAreaInsets();
+  const addFile = useVaultStore(s => s.addFile);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState(0); // 0=none, 1=enc, 2=shard, 3=dist, 4=done
@@ -32,6 +36,19 @@ export default function UploadScreen() {
           setTimeout(() => {
             setStage(4);
             setProgress(100);
+            
+            // Push to store
+            const newId = `f${Date.now()}`;
+            const newEncName = `enc_${Math.floor(Math.random()*10000).toString(16)}.bin`;
+            addFile({
+              id: newId,
+              encrypted_filename: newEncName,
+              size: '2.1 MB',
+              type: 'PDF',
+              shards: 6,
+              status: ['online','online','online','online','online','online']
+            }, 'contract-nda.pdf');
+
             setTimeout(() => {
               setIsUploading(false);
               setStage(0);
@@ -43,7 +60,7 @@ export default function UploadScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <TopHeader type="upload" title="Upload" />
       
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -119,7 +136,7 @@ export default function UploadScreen() {
         </Card>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

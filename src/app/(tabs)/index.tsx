@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, withDelay } from 'react-native-reanimated';
 import { TOKENS } from '../../constants/tokens';
 import { TopHeader } from '../../components/layout/TopHeader';
@@ -21,11 +22,12 @@ function AnimatedNumber({ value }: { value: number }) {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   
   const usedPercent = (mockMetrics.storageUsedGB / mockMetrics.storageTotalGB) * 100;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <TopHeader type="dashboard" />
       
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -101,7 +103,7 @@ export default function DashboardScreen() {
           })}
         </Card>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -128,86 +130,90 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   greetingWrap: {
-    marginBottom: 18,
+    marginBottom: 24,
+    marginTop: 10,
   },
   greeting: {
     fontFamily: TOKENS.fonts.disp,
-    fontSize: 28,
+    fontSize: 34,
     fontStyle: 'italic',
     color: activeTheme.tx1,
-    lineHeight: 32,
+    lineHeight: 38,
   },
   activitySub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx3,
-    marginTop: 6,
+    marginTop: 8,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   statCard: {
     width: '48.5%',
     backgroundColor: activeTheme.surf,
     borderWidth: 1,
     borderColor: activeTheme.bdr,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 12,
   },
   cardLabel: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 10,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     color: activeTheme.tx3,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   cardValue: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 26,
+    fontSize: 30,
     color: activeTheme.tx1,
-    lineHeight: 28,
+    lineHeight: 34,
   },
   cardUnit: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 14,
+    fontSize: 16,
     color: activeTheme.tx2,
+    marginLeft: 2,
   },
   cardSub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 11,
     color: activeTheme.tx2,
-    marginTop: 4,
+    marginTop: 6,
   },
   subRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
+    gap: 6,
+    marginTop: 6,
   },
   storageLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 28,
+    marginTop: 4,
   },
   storageLabelText: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx3,
   },
   nodesCard: {
-    paddingVertical: 4,
-    paddingHorizontal: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    marginBottom: 28,
   },
   nodeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
+    gap: 14,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: activeTheme.bdr,
   },
@@ -219,31 +225,33 @@ const styles = StyleSheet.create({
   },
   nodeName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx1,
+    marginBottom: 2,
   },
   nodeMeta: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx2,
   },
   nodeLat: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx2,
   },
   nodeLatWarn: {
     color: activeTheme.warn,
   },
   auditCard: {
-    paddingVertical: 4,
-    paddingHorizontal: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    marginBottom: 10,
   },
   auditRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    paddingVertical: 10,
+    gap: 14,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: activeTheme.bdr,
   },
@@ -255,18 +263,19 @@ const styles = StyleSheet.create({
   },
   auditFile: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 13,
     color: activeTheme.tx1,
-    maxWidth: 160,
+    maxWidth: 180,
+    marginBottom: 2,
   },
   auditSub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx3,
   },
   auditTime: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx3,
   },
 });

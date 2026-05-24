@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight, Trash2 } from 'lucide-react-native';
 import { TOKENS } from '../../constants/tokens';
 import { TopHeader } from '../../components/layout/TopHeader';
@@ -20,6 +21,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const logout = useAuthStore(s => s.logout);
   const { theme, toggleTheme } = useThemeStore();
+  const insets = useSafeAreaInsets();
   
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -36,7 +38,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <TopHeader type="settings" title="You" />
       
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -156,7 +158,7 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-    </SafeAreaView>
+    </View>
   );
 }
 

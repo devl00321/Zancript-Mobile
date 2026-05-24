@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, withTiming, useDerivedValue } from 'react-native-reanimated';
 import { ChevronRight, Download, Share, Trash } from 'lucide-react-native';
 import { TOKENS } from '../../constants/tokens';
@@ -10,15 +11,17 @@ import { EncBadge, FileTypeBadge, StatusBadge } from '../../components/ui/Badge'
 import { ShardDots } from '../../components/ui/ShardDots';
 import { PrimaryButton, GhostButton } from '../../components/ui/Button';
 import { NodeDot } from '../../components/ui/NodeDot';
-import { mockFiles, mockDecryptedNames } from '../../api/mockData';
+import { useVaultStore } from '../../store/vaultStore';
 
 const activeTheme = TOKENS.colors.dark;
 
 function FileRow({ file, isLast }: { file: any, isLast: boolean }) {
   const [expanded, setExpanded] = useState(false);
+  const decryptedNames = useVaultStore(s => s.decryptedNames);
+  const deleteFile = useVaultStore(s => s.deleteFile);
   
   // Bug 1 Fix: Decrypt filename client-side
-  const decryptedName = mockDecryptedNames[file.encrypted_filename] || 'Unknown File';
+  const decryptedName = decryptedNames[file.encrypted_filename] || 'Unknown File';
 
   const progress = useDerivedValue(() => withTiming(expanded ? 1 : 0, { duration: 250 }));
   
@@ -85,6 +88,13 @@ function FileRow({ file, isLast }: { file: any, isLast: boolean }) {
                 style={styles.actionBtn} 
                 fullWidth={false}
               />
+              <GhostButton 
+                label="Delete" 
+                icon={<Trash size={14} color={activeTheme.danger} />} 
+                style={styles.actionBtn} 
+                fullWidth={false}
+                onPress={() => deleteFile(file.id)}
+              />
             </View>
           </View>
         </View>
@@ -106,8 +116,11 @@ function ShardDetailCard({ label, status, location }: any) {
 }
 
 export default function VaultScreen() {
+  const insets = useSafeAreaInsets();
+  const files = useVaultStore(s => s.files);
+  
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <TopHeader type="vault" title="My Vault" />
       
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -115,13 +128,17 @@ export default function VaultScreen() {
           <EncBadge />
         </View>
         
-        <Card style={styles.filesCard}>
-          {mockFiles.map((file, i) => (
-            <FileRow key={file.id} file={file} isLast={i === mockFiles.length - 1} />
-          ))}
-        </Card>
+        {files.length === 0 ? (
+          <Text style={styles.emptyText}>Your vault is empty.</Text>
+        ) : (
+          <Card style={styles.filesCard}>
+            {files.map((f, i) => (
+              <FileRow key={f.id} file={f} isLast={i === files.length - 1} />
+            ))}
+          </Card>
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -241,5 +258,12 @@ const styles = StyleSheet.create({
   actionBtn: {
     flex: 1,
     height: 40,
+  },
+  emptyText: {
+    fontFamily: TOKENS.fonts.mono,
+    fontSize: 12,
+    color: activeTheme.tx3,
+    textAlign: 'center',
+    marginTop: 40,
   },
 });

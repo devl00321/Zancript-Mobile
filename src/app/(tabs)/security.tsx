@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Monitor, Smartphone, Link } from 'lucide-react-native';
 import { TOKENS } from '../../constants/tokens';
 import { TopHeader } from '../../components/layout/TopHeader';
@@ -14,9 +15,10 @@ const activeTheme = TOKENS.colors.dark;
 
 export default function SecurityScreen() {
   const [activeTab, setActiveTab] = useState<'events' | 'sessions' | 'nodes'>('events');
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <TopHeader 
         type="security" 
         title="Security" 
@@ -34,7 +36,7 @@ export default function SecurityScreen() {
         {activeTab === 'sessions' && <SessionsPanel />}
         {activeTab === 'nodes' && <NodesPanel />}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
