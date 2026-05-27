@@ -18,68 +18,55 @@ export function CipherText({ text, duration = 80, delay = 40, style }: CipherTex
   const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
-    let timeoutIds: ReturnType<typeof setTimeout>[] = [];
-    let intervalIds: ReturnType<typeof setInterval>[] = [];
+    let animationFrameId: number;
+    const startTime = Date.now();
+    
+    // Pre-calculate the exact timeline for each character
+    const charConfigs = text.split('').map((finalChar, index) => {
+      const flips = 4 + Math.floor(Math.random() * 3); // 4-6 flips
+      const startFlippingAt = index * delay;
+      const finishFlippingAt = startFlippingAt + (flips * duration);
+      return { finalChar, startFlippingAt, finishFlippingAt };
+    });
 
-    const animate = () => {
-      setIsResolved(false);
-      setDisplayText(Array(text.length).fill('00').join('').substring(0, text.length));
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      let currentText = '';
+      let allResolved = true;
 
-      const resolvedChars: string[] = Array(text.length).fill('');
-      
-      text.split('').forEach((finalChar, index) => {
-        // Delay before starting this character
-        const startTimeout = setTimeout(() => {
-          let flips = 0;
-          const maxFlips = 4 + Math.floor(Math.random() * 3); // 4-6 flips
-          
-          const flipInterval = setInterval(() => {
-            if (flips >= maxFlips) {
-              clearInterval(flipInterval);
-              resolvedChars[index] = finalChar;
-              
-              setDisplayText((prev) => {
-                const arr = prev.split('');
-                arr[index] = finalChar;
-                return arr.join('');
-              });
+      for (let i = 0; i < charConfigs.length; i++) {
+        const config = charConfigs[i];
+        if (elapsed < config.startFlippingAt) {
+          // Not started flipping yet
+          currentText += '0';
+          allResolved = false;
+        } else if (elapsed >= config.finishFlippingAt) {
+          // Finished flipping, show real character
+          currentText += config.finalChar;
+        } else {
+          // Actively flipping
+          // Only update the random character every 'duration' ms roughly
+          // Or just update it every frame for a smoother look
+          currentText += chars[Math.floor(Math.random() * chars.length)];
+          allResolved = false;
+        }
+      }
 
-              if (index === text.length - 1) {
-                setIsResolved(true);
-              }
-            } else {
-              resolvedChars[index] = chars[Math.floor(Math.random() * chars.length)];
-              setDisplayText((prev) => {
-                const arr = prev.split('');
-                arr[index] = resolvedChars[index];
-                return arr.join('');
-              });
-              flips++;
-            }
-          }, duration);
-          
-          intervalIds.push(flipInterval);
-        }, index * delay);
-        
-        timeoutIds.push(startTimeout);
-      });
+      setDisplayText(currentText);
+
+      if (allResolved) {
+        setIsResolved(true);
+      } else {
+        animationFrameId = requestAnimationFrame(tick);
+      }
     };
 
-    animate();
-
-    let loopTimeout: ReturnType<typeof setTimeout>;
-    if (isResolved) {
-      loopTimeout = setTimeout(() => {
-        animate();
-      }, 3000);
-    }
+    animationFrameId = requestAnimationFrame(tick);
 
     return () => {
-      timeoutIds.forEach(clearTimeout);
-      intervalIds.forEach(clearInterval);
-      if (loopTimeout) clearTimeout(loopTimeout);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [text, duration, delay, isResolved]);
+  }, [text, duration, delay]);
 
   return (
     <Text style={[styles.text, isResolved && styles.resolvedText, style]}>

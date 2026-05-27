@@ -10,10 +10,11 @@ import { Avatar } from '../../components/ui/Avatar';
 import { EncBadge } from '../../components/ui/Badge';
 import { Toggle } from '../../components/ui/Toggle';
 import { DangerButton, GhostButton } from '../../components/ui/Button';
-import { mockUser, mockMetrics } from '../../api/mockData';
+import { mockUser } from '../../api/mockData';
 import { useThemeStore } from '../../store/themeStore';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
+import { API, DashboardStats } from '../../api/endpoints';
 
 const activeTheme = TOKENS.colors.dark;
 
@@ -25,6 +26,14 @@ export default function SettingsScreen() {
   
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [metrics, setMetrics] = useState<DashboardStats | null>(null);
+
+  React.useEffect(() => {
+    API.dashboard.getStats().then(setMetrics).catch(() => {});
+  }, []);
+
+  const storageUsedGB = metrics ? (metrics.total_storage_bytes / (1024 * 1024 * 1024)).toFixed(2) : '0.00';
+  const storageTotalGB = '5.00';
 
   const [toggles, setToggles] = useState({
     replication: true,
@@ -48,7 +57,7 @@ export default function SettingsScreen() {
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{mockUser.displayName.toLowerCase()}</Text>
             <Text style={styles.profileSub}>
-              Free Plan · {mockMetrics.storageUsedGB} GB / {mockMetrics.storageTotalGB} GB
+              Free Plan · {storageUsedGB} GB / {storageTotalGB} GB
             </Text>
             <View style={styles.badgeWrap}>
               <EncBadge />
@@ -58,8 +67,8 @@ export default function SettingsScreen() {
 
         <SectionLabel text="Authentication" />
         <Card style={styles.settingsCard}>
-          <SettingRow label="Passkeys" sub="MacBook Pro · iPhone 15" action={<ChevronRight size={16} color={activeTheme.tx3} />} />
-          <SettingRow label="Access key" sub="Fallback login method" action={<ChevronRight size={16} color={activeTheme.tx3} />} isLast />
+          <SettingRow label="Passkeys" sub="MacBook Pro · iPhone 15" action={<ChevronRight size={26} color={activeTheme.tx3} />} />
+          <SettingRow label="Access key" sub="Fallback login method" action={<ChevronRight size={26} color={activeTheme.tx3} />} isLast />
         </Card>
 
         <SectionLabel text="Encryption info" />
@@ -106,7 +115,7 @@ export default function SettingsScreen() {
           </Text>
           <DangerButton 
             label="Delete my account" 
-            icon={<Trash2 size={16} color={activeTheme.danger} />}
+            icon={<Trash2 size={26} color={activeTheme.danger} />}
             onPress={() => setModalVisible(true)}
           />
         </Card>
@@ -208,12 +217,12 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 14,
+    fontSize: 20,
     color: activeTheme.tx1,
   },
   profileSub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 14,
     color: activeTheme.tx2,
     marginTop: 2,
   },
@@ -232,7 +241,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 13,
+    paddingVertical: 18,
   },
   settingTextCol: {
     flex: 1,
@@ -240,14 +249,14 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontFamily: TOKENS.fonts.sans,
-    fontSize: 14,
+    fontSize: 18,
     color: activeTheme.tx1,
   },
   settingSub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 14,
     color: activeTheme.tx3,
-    marginTop: 2,
+    marginTop: 4,
   },
   settingAction: {
     flexShrink: 0,
@@ -256,16 +265,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 9,
+    paddingVertical: 12,
   },
   infoKey: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 15,
     color: activeTheme.tx3,
   },
   infoValue: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 15,
     color: activeTheme.tx1,
   },
   infoValueAccent: {
@@ -276,9 +285,10 @@ const styles = StyleSheet.create({
   },
   dangerDesc: {
     fontFamily: TOKENS.fonts.sans,
-    fontSize: 13,
+    fontSize: 16,
     color: activeTheme.tx2,
     marginBottom: 12,
+    lineHeight: 22,
   },
   modalBackdrop: {
     flex: 1,

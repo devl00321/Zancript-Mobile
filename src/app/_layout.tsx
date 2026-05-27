@@ -1,5 +1,5 @@
 import '../global.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
@@ -8,7 +8,8 @@ import { JetBrainsMono_400Regular, JetBrainsMono_500Medium } from '@expo-google-
 import * as SplashScreen from 'expo-splash-screen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { AnimatedSplashScreen } from '../components/AnimatedSplashScreen';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -23,6 +24,9 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
+  const [isAppReady, setAppReady] = useState(false);
+  const [isSplashAnimationComplete, setSplashAnimationComplete] = useState(false);
+
   const [loaded, error] = useFonts({
     'Instrument Serif': InstrumentSerif_400Regular_Italic,
     'DM Sans': DMSans_400Regular,
@@ -35,11 +39,12 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded || error) {
+      setAppReady(true);
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
 
-  if (!loaded && !error) {
+  if (!isAppReady) {
     return null;
   }
 
@@ -51,6 +56,11 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
           </Stack>
+          {!isSplashAnimationComplete && (
+            <View style={StyleSheet.absoluteFill} className="z-50">
+              <AnimatedSplashScreen onAnimationFinish={() => setSplashAnimationComplete(true)} />
+            </View>
+          )}
           <StatusBar style="light" />
         </View>
       </QueryClientProvider>

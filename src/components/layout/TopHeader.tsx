@@ -20,8 +20,8 @@ export function TopHeader({ type, title, badge }: TopHeaderProps) {
     <View style={styles.header}>
       {type === 'dashboard' ? (
         <View style={styles.logoRow}>
-          <HexLogo size={22} />
-          <Text style={styles.logoText}>ZANCRYPT</Text>
+          <HexLogo size={26} />
+          <Text style={styles.logoText}>ZanCrypt</Text>
         </View>
       ) : (
         <View style={styles.titleRow}>
@@ -33,14 +33,14 @@ export function TopHeader({ type, title, badge }: TopHeaderProps) {
       <View style={styles.actions}>
         {type === 'dashboard' && (
           <>
-            <IconButton icon={<Bell size={18} color={activeTheme.tx2} />} />
-            <IconButton icon={<Settings size={18} color={activeTheme.tx2} />} onPress={() => router.push('/(tabs)/settings')} />
+            <IconButton icon={<Bell size={24} color={activeTheme.tx2} />} />
+            <IconButton icon={<Settings size={24} color={activeTheme.tx2} />} onPress={() => router.push('/(tabs)/settings')} />
           </>
         )}
         {type === 'vault' && (
           <>
-            <IconButton icon={<Search size={18} color={activeTheme.tx2} />} />
-            <IconButton icon={<CloudUpload size={18} color={activeTheme.tx2} />} onPress={() => router.push('/(tabs)/upload' as any)} />
+            <IconButton icon={<Search size={24} color={activeTheme.tx2} />} />
+            <IconButton icon={<CloudUpload size={24} color={activeTheme.tx2} />} onPress={() => router.push('/(tabs)/upload' as any)} />
           </>
         )}
       </View>
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 13,
+    fontSize: 16,
     color: activeTheme.tx1,
     letterSpacing: 1.3,
   },
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: TOKENS.fonts.disp,
-    fontSize: 26,
+    fontSize: 34,
     fontStyle: 'italic',
     color: activeTheme.tx1,
   },
@@ -100,9 +100,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     backgroundColor: activeTheme.raised,
     borderWidth: 1,
     borderColor: activeTheme.bdr,

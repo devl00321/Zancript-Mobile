@@ -9,8 +9,10 @@ import { SectionLabel } from '../../components/ui/Input';
 import { NodeDot, NodeStatus } from '../../components/ui/NodeDot';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { StatusBadge, Severity } from '../../components/ui/Badge';
-import { mockUser, mockMetrics, mockNodes, mockAuditLogs } from '../../api/mockData';
+import { mockUser, mockNodes } from '../../api/mockData';
 import { useRouter } from 'expo-router';
+import { API, DashboardStats } from '../../api/endpoints';
+import { useVaultStore } from '../../store/vaultStore';
 
 const activeTheme = TOKENS.colors.dark;
 
@@ -23,8 +25,17 @@ function AnimatedNumber({ value }: { value: number }) {
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [metrics, setMetrics] = React.useState<DashboardStats | null>(null);
+  const { files, fetchFiles } = useVaultStore();
+
+  React.useEffect(() => {
+    API.dashboard.getStats().then(setMetrics).catch(() => {});
+    fetchFiles();
+  }, []);
   
-  const usedPercent = (mockMetrics.storageUsedGB / mockMetrics.storageTotalGB) * 100;
+  const storageUsedGB = metrics ? (metrics.total_storage_bytes / (1024 * 1024 * 1024)) : 0;
+  const storageTotalGB = 5.0; // Assume 5GB free tier limit for now
+  const usedPercent = (storageUsedGB / storageTotalGB) * 100;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -36,32 +47,32 @@ export default function DashboardScreen() {
             Good morning,{'\n'}{mockUser.displayName}.
           </Text>
           <Text style={styles.activitySub}>
-            Last activity 14 min ago · {mockMetrics.activeNodes} nodes healthy
+            Last activity 14 min ago · {metrics ? metrics.active_nodes : 0} nodes healthy
           </Text>
         </View>
 
         <View style={styles.statsGrid}>
-          <StatCard label="Files stored" value={mockMetrics.filesStored} sub={`+${mockMetrics.filesAddedToday} today`} />
-          <StatCard label="Total shards" value={mockMetrics.totalShards} sub={`across ${mockMetrics.totalNodes} nodes`} />
+          <StatCard label="Files stored" value={metrics ? metrics.stored_files : 0} sub="total encrypted" />
+          <StatCard label="Security Score" value={metrics ? metrics.security_score : 100} sub="integrity check" />
           <StatCard 
             label="Active nodes" 
-            value={`${mockMetrics.activeNodes}/${mockMetrics.totalNodes}`} 
+            value={`${metrics ? metrics.active_nodes : 0}/6`} 
             valueColor={activeTheme.acc}
             sub={<View style={styles.subRow}><NodeDot status="online" size={7} /><Text style={styles.cardSub}>all healthy</Text></View>} 
           />
           <StatCard 
             label="Storage used" 
-            value={mockMetrics.storageUsedGB.toString()} 
+            value={storageUsedGB.toFixed(2)} 
             unit="GB"
-            sub={`of ${mockMetrics.storageTotalGB} GB free`} 
+            sub={`of ${storageTotalGB} GB free`} 
           />
         </View>
 
         <ProgressBar value={usedPercent} />
         
         <View style={styles.storageLabels}>
-          <Text style={styles.storageLabelText}>{mockMetrics.storageUsedGB} GB used</Text>
-          <Text style={styles.storageLabelText}>{mockMetrics.storageTotalGB - mockMetrics.storageUsedGB} GB free</Text>
+          <Text style={styles.storageLabelText}>{storageUsedGB.toFixed(2)} GB used</Text>
+          <Text style={styles.storageLabelText}>{(storageTotalGB - storageUsedGB).toFixed(2)} GB free</Text>
         </View>
 
         <SectionLabel text="Storage nodes" />
@@ -82,22 +93,27 @@ export default function DashboardScreen() {
 
         <SectionLabel text="Recent activity" />
         <Card style={styles.auditCard}>
-          {mockAuditLogs.map((log, index, arr) => {
-            let severity: Severity = 'muted';
-            if (log.action === 'UPLOAD') severity = 'success';
-            if (log.action === 'DOWNLOAD') severity = 'muted';
-            if (log.action === 'SHARE') severity = 'info';
+          {files.length === 0 ? (
+            <Text style={{ fontFamily: TOKENS.fonts.mono, color: activeTheme.tx3, fontSize: 13, textAlign: 'center', paddingVertical: 20 }}>No recent activity</Text>
+          ) : files.slice(0, 3).map((file, index, arr) => {
+            const decryptedName = file.encrypted_metadata ? 
+              (file.encrypted_metadata.includes('.') ? file.encrypted_metadata : file.encrypted_filename) 
+              : file.encrypted_filename;
+              
+            // Simple format for the timestamp, just showing date or time
+            const dateObj = new Date(file.created_at);
+            const timeStr = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
             
             return (
-              <View key={log.id} style={[styles.auditRow, index === arr.length - 1 && styles.noBorder]}>
+              <View key={file.id} style={[styles.auditRow, index === arr.length - 1 && styles.noBorder]}>
                 <View style={styles.auditBadgeWrap}>
-                  <StatusBadge severity={severity} label={log.action} />
+                  <StatusBadge severity="success" label="UPLOAD" />
                 </View>
                 <View style={styles.auditInfo}>
-                  <Text style={styles.auditFile} numberOfLines={1}>{log.file}</Text>
-                  <Text style={styles.auditSub}>{log.sub}</Text>
+                  <Text style={styles.auditFile} numberOfLines={1}>{decryptedName}</Text>
+                  <Text style={styles.auditSub}>{(file.file_size / (1024 * 1024)).toFixed(2)} MB · 6 shards</Text>
                 </View>
-                <Text style={styles.auditTime}>{log.time}</Text>
+                <Text style={styles.auditTime}>{timeStr}</Text>
               </View>
             );
           })}
@@ -135,10 +151,10 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontFamily: TOKENS.fonts.disp,
-    fontSize: 34,
+    fontSize: 42,
     fontStyle: 'italic',
     color: activeTheme.tx1,
-    lineHeight: 38,
+    lineHeight: 46,
   },
   activitySub: {
     fontFamily: TOKENS.fonts.mono,
@@ -163,7 +179,7 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     color: activeTheme.tx3,
@@ -171,9 +187,9 @@ const styles = StyleSheet.create({
   },
   cardValue: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 30,
+    fontSize: 34,
     color: activeTheme.tx1,
-    lineHeight: 34,
+    lineHeight: 38,
   },
   cardUnit: {
     fontFamily: TOKENS.fonts.mono,
@@ -183,7 +199,7 @@ const styles = StyleSheet.create({
   },
   cardSub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx2,
     marginTop: 6,
   },
@@ -201,7 +217,7 @@ const styles = StyleSheet.create({
   },
   storageLabelText: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx3,
   },
   nodesCard: {
@@ -225,13 +241,13 @@ const styles = StyleSheet.create({
   },
   nodeName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 14,
+    fontSize: 16,
     color: activeTheme.tx1,
     marginBottom: 2,
   },
   nodeMeta: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 13,
     color: activeTheme.tx2,
   },
   nodeLat: {
@@ -263,19 +279,19 @@ const styles = StyleSheet.create({
   },
   auditFile: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 13,
+    fontSize: 15,
     color: activeTheme.tx1,
     maxWidth: 180,
     marginBottom: 2,
   },
   auditSub: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx3,
   },
   auditTime: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx3,
   },
 });

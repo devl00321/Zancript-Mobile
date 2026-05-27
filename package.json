@@ -1,5 +1,5 @@
 {
-  "name": "zancript-mobile",
+  "name": "zancrypt-mobile",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -16,6 +16,7 @@
     "expo-constants": "~56.0.15",
     "expo-crypto": "~56.0.3",
     "expo-device": "~56.0.4",
+    "expo-document-picker": "^56.0.4",
     "expo-font": "~56.0.5",
     "expo-glass-effect": "~56.0.4",
     "expo-haptics": "~56.0.3",

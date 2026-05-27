@@ -1,24 +1,24 @@
 {
   "expo": {
-    "name": "zancript-mobile",
-    "slug": "zancript-mobile",
+    "name": "ZanCrypt",
+    "slug": "zancrypt-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "zancriptmobile",
+    "scheme": "zancryptmobile",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.rikkhan111.zancriptmobile"
+      "bundleIdentifier": "com.rikkhan111.zancryptmobile"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#4fffb0",
+        "backgroundColor": "#050507",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.rikkhan111.zancriptmobile"
+      "package": "com.rikkhan111.zancryptmobile"
     },
     "web": {
       "output": "static",
@@ -29,7 +29,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#111827",
+          "backgroundColor": "#050507",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 160

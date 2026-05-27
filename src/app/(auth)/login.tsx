@@ -35,7 +35,7 @@ export default function LoginScreen() {
         
         if (hasHardware && isEnrolled) {
           const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: 'Sign in to Zancrypt',
+            promptMessage: 'Sign in to ZanCrypt',
             disableDeviceFallback: true,
             cancelLabel: 'Cancel',
           });
@@ -76,10 +76,10 @@ export default function LoginScreen() {
         <View style={styles.hero}>
           <View style={styles.logoRow}>
             <HexLogo size={22} />
-            <Text style={styles.logoText}>ZANCRYPT</Text>
+            <Text style={styles.logoText}>ZanCrypt</Text>
           </View>
           
-          <Text style={styles.eyebrow}>⬡ ZANCRYPT · ZERO-KNOWLEDGE VAULT</Text>
+          <Text style={styles.eyebrow}>⬡ ZanCrypt · ZERO-KNOWLEDGE VAULT</Text>
           
           <Text style={styles.title}>
             Your files.{'\n'}

@@ -26,7 +26,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: activeTheme.tx3,
         tabBarLabelStyle: {
           fontFamily: TOKENS.fonts.mono,
-          fontSize: 9,
+          fontSize: 11,
           textTransform: 'uppercase',
           letterSpacing: 0.6,
           marginTop: 4,
@@ -40,35 +40,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dash',
-          tabBarIcon: ({ color }) => <LayoutDashboard size={20} color={color} />,
+          tabBarIcon: ({ color }) => <LayoutDashboard size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="vault"
         options={{
           title: 'Vault',
-          tabBarIcon: ({ color }) => <Vault size={20} color={color} />,
+          tabBarIcon: ({ color }) => <Vault size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="upload"
         options={{
           title: 'Upload',
-          tabBarIcon: ({ color }) => <CloudUpload size={20} color={color} />,
+          tabBarIcon: ({ color }) => <CloudUpload size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="security"
         options={{
           title: 'Security',
-          tabBarIcon: ({ color }) => <ShieldCheck size={20} color={color} />,
+          tabBarIcon: ({ color }) => <ShieldCheck size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'You',
-          tabBarIcon: ({ color }) => <User size={20} color={color} />,
+          tabBarIcon: ({ color }) => <User size={24} color={color} />,
         }}
       />
     </Tabs>

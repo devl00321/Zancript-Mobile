@@ -88,7 +88,7 @@ function EventsPanel() {
         <View style={styles.createShareWrap}>
           <GhostButton 
             label="Create share link" 
-            icon={<Link size={14} color={activeTheme.tx2} />}
+            icon={<Link size={20} color={activeTheme.tx2} />}
             style={styles.createShareBtn}
             fullWidth={false}
           />
@@ -105,8 +105,8 @@ function SessionsPanel() {
         <View key={session.id} style={[styles.sessionRow, i === mockSessions.length - 1 && styles.noBorder]}>
           <View style={styles.deviceIcon}>
             {session.device === 'desktop' ? 
-              <Monitor size={16} color={session.current ? activeTheme.acc : activeTheme.tx2} /> : 
-              <Smartphone size={16} color={session.current ? activeTheme.acc : activeTheme.tx2} />}
+              <Monitor size={20} color={session.current ? activeTheme.acc : activeTheme.tx2} /> : 
+              <Smartphone size={20} color={session.current ? activeTheme.acc : activeTheme.tx2} />}
           </View>
           <View style={styles.sessionInfo}>
             <Text style={styles.sessionName}>{session.name}</Text>
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     color: activeTheme.tx3,
@@ -208,13 +208,13 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 14,
     color: activeTheme.tx1,
     marginBottom: 2,
   },
   eventDetail: {
     fontFamily: TOKENS.fonts.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: activeTheme.tx2,
   },
   sharesCard: {
@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
   },
   shareName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx1,
   },
   shareTimer: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.warn,
   },
   timerExpired: {
@@ -287,12 +287,12 @@ const styles = StyleSheet.create({
   },
   sessionName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx1,
   },
   sessionDetail: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx2,
   },
   revokeBtn: {
@@ -316,12 +316,12 @@ const styles = StyleSheet.create({
   },
   nodeName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx1,
   },
   nodeMeta: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx2,
   },
   healthBarTrack: {
@@ -340,11 +340,11 @@ const styles = StyleSheet.create({
   },
   uptimeTxt: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
   },
   latencyTxt: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx3,
   },
 });

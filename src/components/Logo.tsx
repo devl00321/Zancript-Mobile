@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   container: {
     width: 160,
     height: 160,
-    backgroundColor: '#4fffb0', // Zancript Neon Mint
+    backgroundColor: '#4fffb0', // Zancrypt Neon Mint
     borderRadius: 44,
     display: 'flex',
     alignItems: 'center',
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     width: 62, // 44 + 18 (border)
     height: 41, // 32 + 9 (border top)
     borderWidth: 9,
-    borderColor: '#050507', // Zancript Dark Base
+    borderColor: '#050507', // Zancrypt Dark Base
     borderBottomWidth: 0,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,

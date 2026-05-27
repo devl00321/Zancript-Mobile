@@ -17,11 +17,11 @@ const activeTheme = TOKENS.colors.dark;
 
 function FileRow({ file, isLast }: { file: any, isLast: boolean }) {
   const [expanded, setExpanded] = useState(false);
-  const decryptedNames = useVaultStore(s => s.decryptedNames);
   const deleteFile = useVaultStore(s => s.deleteFile);
-  
-  // Bug 1 Fix: Decrypt filename client-side
-  const decryptedName = decryptedNames[file.encrypted_filename] || 'Unknown File';
+  // Decode filename assuming we used base64 or just fallback to encrypted_filename
+  const decryptedName = file.encrypted_metadata ? 
+    (file.encrypted_metadata.includes('.') ? file.encrypted_metadata : file.encrypted_filename) 
+    : file.encrypted_filename;
 
   const progress = useDerivedValue(() => withTiming(expanded ? 1 : 0, { duration: 250 }));
   
@@ -44,11 +44,11 @@ function FileRow({ file, isLast }: { file: any, isLast: boolean }) {
         <FileTypeBadge type={file.type} />
         <View style={styles.fileInfo}>
           <Text style={styles.fileName} numberOfLines={1}>{decryptedName}</Text>
-          <Text style={styles.fileMeta}>{file.size} · {file.shards} shards</Text>
-          <ShardDots count={6} statuses={file.status} />
+          <Text style={styles.fileMeta}>{(file.file_size / (1024 * 1024)).toFixed(2)} MB · 6 shards</Text>
+          <ShardDots count={6} statuses={['online','online','online','online','online','online']} />
         </View>
         <Animated.View style={chevronStyle}>
-          <ChevronRight size={16} color={activeTheme.tx3} />
+          <ChevronRight size={24} color={activeTheme.tx3} />
         </Animated.View>
       </Pressable>
 
@@ -59,7 +59,7 @@ function FileRow({ file, isLast }: { file: any, isLast: boolean }) {
             <View style={styles.detailHeader}>
               <View>
                 <Text style={styles.detailName}>{decryptedName}</Text>
-                <Text style={styles.detailSize}>{file.size} · {file.type}</Text>
+                <Text style={styles.detailSize}>{(file.file_size / (1024 * 1024)).toFixed(2)} MB</Text>
               </View>
               <StatusBadge severity="success" label="Encrypted" />
             </View>
@@ -69,28 +69,28 @@ function FileRow({ file, isLast }: { file: any, isLast: boolean }) {
             <Text style={styles.shardHeader}>Shard distribution</Text>
             
             <View style={styles.shardGrid}>
-              <ShardDetailCard id={0} label="Shard 0" status={file.status[0]} location="Mumbai · Oracle" />
-              <ShardDetailCard id={1} label="Shard 1" status={file.status[1]} location="Singapore · Oracle" />
-              <ShardDetailCard id={2} label="Shard 2" status={file.status[2]} location="Tokyo · Fly.io" />
-              <ShardDetailCard id={3} label="Replica" status={file.status[3]} location="Frankfurt · GCP" />
+              <ShardDetailCard id={0} label="Shard 0" status="online" location="Mumbai · Oracle" />
+              <ShardDetailCard id={1} label="Shard 1" status="online" location="Singapore · Oracle" />
+              <ShardDetailCard id={2} label="Shard 2" status="online" location="Tokyo · Fly.io" />
+              <ShardDetailCard id={3} label="Replica" status="online" location="Frankfurt · GCP" />
             </View>
             
             <View style={styles.actionRow}>
               <PrimaryButton 
                 label="Download" 
-                icon={<Download size={14} color={activeTheme.void} />} 
+                icon={<Download size={18} color={activeTheme.void} />} 
                 style={styles.actionBtn} 
                 fullWidth={false}
               />
               <GhostButton 
                 label="Share" 
-                icon={<Share size={14} color={activeTheme.tx2} />} 
+                icon={<Share size={18} color={activeTheme.tx2} />} 
                 style={styles.actionBtn} 
                 fullWidth={false}
               />
               <GhostButton 
                 label="Delete" 
-                icon={<Trash size={14} color={activeTheme.danger} />} 
+                icon={<Trash size={18} color={activeTheme.danger} />} 
                 style={styles.actionBtn} 
                 fullWidth={false}
                 onPress={() => deleteFile(file.id)}
@@ -117,7 +117,11 @@ function ShardDetailCard({ label, status, location }: any) {
 
 export default function VaultScreen() {
   const insets = useSafeAreaInsets();
-  const files = useVaultStore(s => s.files);
+  const { files, fetchFiles, isLoading } = useVaultStore();
+
+  React.useEffect(() => {
+    fetchFiles();
+  }, []);
   
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -128,7 +132,9 @@ export default function VaultScreen() {
           <EncBadge />
         </View>
         
-        {files.length === 0 ? (
+        {isLoading ? (
+          <Text style={styles.emptyText}>Loading vault...</Text>
+        ) : files.length === 0 ? (
           <Text style={styles.emptyText}>Your vault is empty.</Text>
         ) : (
           <Card style={styles.filesCard}>
@@ -173,12 +179,12 @@ const styles = StyleSheet.create({
   },
   fileName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 16,
     color: activeTheme.tx1,
   },
   fileMeta: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 13,
     color: activeTheme.tx2,
   },
   detailContainer: {
@@ -200,12 +206,12 @@ const styles = StyleSheet.create({
   },
   detailName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 13,
+    fontSize: 15,
     color: activeTheme.tx1,
   },
   detailSize: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx2,
   },
   divider: {
@@ -215,7 +221,7 @@ const styles = StyleSheet.create({
   },
   shardHeader: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx3,
     letterSpacing: 1,
     textTransform: 'uppercase',
@@ -243,12 +249,12 @@ const styles = StyleSheet.create({
   },
   shardLabel: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.acc,
   },
   shardLocation: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx2,
   },
   actionRow: {
@@ -261,7 +267,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 18,
     color: activeTheme.tx3,
     textAlign: 'center',
     marginTop: 40,

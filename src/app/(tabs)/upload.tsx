@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CloudUpload, Plus, Lock, LayoutGrid, Globe, CheckCircle } from 'lucide-react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { TOKENS } from '../../constants/tokens';
 import { TopHeader } from '../../components/layout/TopHeader';
 import { Card } from '../../components/ui/Card';
@@ -10,53 +11,103 @@ import { FileTypeBadge } from '../../components/ui/Badge';
 import { PrimaryButton } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { useVaultStore } from '../../store/vaultStore';
+import { API } from '../../api/endpoints';
+import * as Crypto from 'expo-crypto';
 
 const activeTheme = TOKENS.colors.dark;
 
 export default function UploadScreen() {
   const insets = useSafeAreaInsets();
-  const addFile = useVaultStore(s => s.addFile);
+  const fetchFiles = useVaultStore(s => s.fetchFiles);
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState(0); // 0=none, 1=enc, 2=shard, 3=dist, 4=done
+  const [currentFile, setCurrentFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
 
-  const simulateUpload = () => {
-    setIsUploading(true);
-    setProgress(0);
-    setStage(1);
+  const simulateUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+      });
 
-    setTimeout(() => {
-      setProgress(35);
-      setTimeout(() => {
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const file = result.assets[0];
+      setCurrentFile(file);
+      setIsUploading(true);
+      setProgress(0);
+      
+      // Stage 1: "Encrypting"
+      setStage(1);
+      setProgress(20);
+      
+      // Generate mock encrypted name
+      const ext = file.name.split('.').pop() || 'bin';
+      const encrypted_filename = `enc_${Date.now()}.${ext}`;
+      const hash = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, file.name + Date.now().toString());
+
+      setTimeout(async () => {
+        // Stage 2: "Sharding"
         setStage(2);
-        setProgress(65);
-        setTimeout(() => {
+        setProgress(40);
+        
+        setTimeout(async () => {
+          // Stage 3: "Distributing" (Network Request)
           setStage(3);
-          setProgress(92);
-          setTimeout(() => {
+          setProgress(70);
+          
+          try {
+            const formData = new FormData();
+            formData.append('encrypted_filename', encrypted_filename);
+            formData.append('encrypted_metadata', file.name); // Using this to store the real name for now
+            formData.append('file_size', (file.size || 0).toString());
+            formData.append('integrity_hash', hash);
+            formData.append('manifest', JSON.stringify({ type: file.mimeType, original: file.name }));
+            
+            // Append file as a shard
+            if (Platform.OS === 'web') {
+              // Web support not strictly required but good practice
+              const res = await fetch(file.uri);
+              const blob = await res.blob();
+              formData.append('shards', blob, 'shard_0.bin');
+            } else {
+              formData.append('shards', {
+                uri: file.uri,
+                name: 'shard_0.bin',
+                type: file.mimeType || 'application/octet-stream',
+              } as any);
+            }
+            
+            await API.files.upload(formData);
+            
+            // Stage 4: Done
             setStage(4);
             setProgress(100);
             
-            // Push to store
-            const newId = `f${Date.now()}`;
-            const newEncName = `enc_${Math.floor(Math.random()*10000).toString(16)}.bin`;
-            addFile({
-              id: newId,
-              encrypted_filename: newEncName,
-              size: '2.1 MB',
-              type: 'PDF',
-              shards: 6,
-              status: ['online','online','online','online','online','online']
-            }, 'contract-nda.pdf');
-
+            await fetchFiles(); // Refresh vault
+            
             setTimeout(() => {
               setIsUploading(false);
               setStage(0);
+              setCurrentFile(null);
             }, 2000);
-          }, 800);
-        }, 1200);
-      }, 1500);
-    }, 1000);
+            
+          } catch (err) {
+            // Upload failed
+            setIsUploading(false);
+            setStage(0);
+            setCurrentFile(null);
+            alert("Upload failed. Make sure backend is reachable.");
+          }
+        }, 800);
+      }, 800);
+      
+    } catch (error) {
+      console.error(error);
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -73,7 +124,7 @@ export default function UploadScreen() {
             
             <PrimaryButton 
               label="Select Files" 
-              icon={<Plus size={14} color={activeTheme.void} />}
+              icon={<Plus size={18} color={activeTheme.void} />}
               onPress={simulateUpload}
               style={styles.selectBtn}
               fullWidth={false}
@@ -81,13 +132,13 @@ export default function UploadScreen() {
           </Pressable>
         )}
 
-        {isUploading && (
+        {isUploading && currentFile && (
           <Card style={styles.progressCard}>
             <View style={styles.fileRow}>
-              <FileTypeBadge type="PDF" />
+              <FileTypeBadge type={currentFile.mimeType?.split('/')[1]?.toUpperCase() || "FILE"} />
               <View>
-                <Text style={styles.fileName}>contract-nda.pdf</Text>
-                <Text style={styles.fileSize}>2.1 MB</Text>
+                <Text style={styles.fileName}>{currentFile.name}</Text>
+                <Text style={styles.fileSize}>{((currentFile.size || 0) / (1024 * 1024)).toFixed(2)} MB</Text>
               </View>
             </View>
 
@@ -95,7 +146,7 @@ export default function UploadScreen() {
               <ProgressBar value={progress} isShimmering={stage > 0 && stage < 4} />
               <View style={styles.progLabels}>
                 <Text style={styles.progLabelText}>
-                  {stage === 1 ? 'Encrypting...' : stage === 2 ? 'Sharding...' : stage === 3 ? 'Distributing...' : stage === 4 ? 'Upload complete' : 'Preparing...'}
+                  {stage === 1 ? 'Encrypting...' : stage === 2 ? 'Sharding...' : stage === 3 ? 'Uploading...' : stage === 4 ? 'Complete' : 'Preparing...'}
                 </Text>
                 <Text style={styles.progLabelText}>{progress}%</Text>
               </View>
@@ -104,7 +155,7 @@ export default function UploadScreen() {
             <View style={styles.stepsWrap}>
               <UploadStep icon={Lock} label="Encrypting" status={stage > 1 ? 'AES-256-GCM ✓' : stage === 1 ? 'Pending...' : 'Pending'} active={stage === 1} done={stage > 1} />
               <UploadStep icon={LayoutGrid} label="Sharding" status={stage > 2 ? '3 shards ✓' : stage === 2 ? 'Pending...' : 'Pending'} active={stage === 2} done={stage > 2} />
-              <UploadStep icon={Globe} label="Distributing" status={stage > 3 ? 'All nodes ✓' : stage === 3 ? 'Pending...' : 'Pending'} active={stage === 3} done={stage > 3} />
+              <UploadStep icon={Globe} label="Distributing" status={stage > 3 ? 'Uploaded ✓' : stage === 3 ? 'Pending...' : 'Pending'} active={stage === 3} done={stage > 3} />
               <UploadStep icon={CheckCircle} label="Verified" status={stage === 4 ? 'Stored ✓' : 'Pending'} active={false} done={stage === 4} isLast />
             </View>
           </Card>
@@ -113,21 +164,21 @@ export default function UploadScreen() {
         <SectionLabel text="How your file is protected" style={{ marginTop: 24 }} />
         <Card style={styles.eduCard}>
           <View style={styles.eduRow}>
-            <Lock size={18} color={activeTheme.acc} style={styles.eduIcon} />
+            <Lock size={24} color={activeTheme.acc} style={styles.eduIcon} />
             <View style={styles.eduTextCol}>
               <Text style={styles.eduTitle}>Encrypted on device</Text>
               <Text style={styles.eduBody}>AES-256-GCM with a key that never leaves your phone.</Text>
             </View>
           </View>
           <View style={styles.eduRow}>
-            <LayoutGrid size={18} color={activeTheme.acc} style={styles.eduIcon} />
+            <LayoutGrid size={24} color={activeTheme.acc} style={styles.eduIcon} />
             <View style={styles.eduTextCol}>
               <Text style={styles.eduTitle}>Split into shards</Text>
               <Text style={styles.eduBody}>Minimum 3 shards regardless of file size.</Text>
             </View>
           </View>
           <View style={[styles.eduRow, styles.noBorder, { paddingBottom: 0 }]}>
-            <Globe size={18} color={activeTheme.acc} style={styles.eduIcon} />
+            <Globe size={24} color={activeTheme.acc} style={styles.eduIcon} />
             <View style={styles.eduTextCol}>
               <Text style={styles.eduTitle}>Distributed globally</Text>
               <Text style={styles.eduBody}>Each shard on a different provider and region.</Text>
@@ -143,7 +194,7 @@ export default function UploadScreen() {
 function UploadStep({ icon: Icon, label, status, active, done, isLast }: any) {
   return (
     <View style={[styles.stepRow, !isLast && styles.stepBorder]}>
-      <Icon size={14} color={done ? activeTheme.acc : activeTheme.tx3} />
+      <Icon size={18} color={done ? activeTheme.acc : activeTheme.tx3} />
       <Text style={styles.stepLabel}>{label}</Text>
       <Text style={[styles.stepStatus, done && styles.stepStatusDone, active && styles.stepStatusActive]}>{status}</Text>
     </View>
@@ -174,13 +225,13 @@ const styles = StyleSheet.create({
   },
   zoneTitle: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx2,
     marginBottom: 4,
   },
   zoneSub: {
     fontFamily: TOKENS.fonts.sans,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx3,
   },
   selectBtn: {
@@ -199,12 +250,12 @@ const styles = StyleSheet.create({
   },
   fileName: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx1,
   },
   fileSize: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx2,
   },
   progWrap: {
@@ -217,7 +268,7 @@ const styles = StyleSheet.create({
   },
   progLabelText: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: activeTheme.tx3,
   },
   stepsWrap: {
@@ -235,12 +286,12 @@ const styles = StyleSheet.create({
   },
   stepLabel: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx2,
   },
   stepStatus: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 10,
+    fontSize: 12,
     color: activeTheme.tx3,
     marginLeft: 'auto',
   },
@@ -273,13 +324,13 @@ const styles = StyleSheet.create({
   },
   eduTitle: {
     fontFamily: TOKENS.fonts.mono,
-    fontSize: 11,
+    fontSize: 13,
     color: activeTheme.tx1,
     marginBottom: 2,
   },
   eduBody: {
     fontFamily: TOKENS.fonts.sans,
-    fontSize: 12,
+    fontSize: 14,
     color: activeTheme.tx2,
   },
 });
