@@ -40,8 +40,7 @@ export const API = {
       const API_KEY = process.env.EXPO_PUBLIC_API_KEY;
       
       const headers: Record<string, string> = {
-        'x-api-key': API_KEY || '',
-        'Authorization': `Bearer ${API_KEY}`,
+        'X-API-Key': API_KEY || '',
       };
       
       if (process.env.EXPO_PUBLIC_ANDROID_PACKAGE) {

@@ -94,12 +94,13 @@ export default function UploadScreen() {
               setCurrentFile(null);
             }, 2000);
             
-          } catch (err) {
+          } catch (err: any) {
             // Upload failed
             setIsUploading(false);
             setStage(0);
             setCurrentFile(null);
-            alert("Upload failed. Make sure backend is reachable.");
+            const msg = err?.response?.data?.message || err?.message || 'Unknown error';
+            alert(`Upload failed: ${msg}`);
           }
         }, 800);
       }, 800);

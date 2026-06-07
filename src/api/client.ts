@@ -15,13 +15,11 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   if (API_KEY && config.headers) {
     if (typeof config.headers.set === 'function') {
-      config.headers.set('x-api-key', API_KEY);
-      config.headers.set('Authorization', `Bearer ${API_KEY}`);
+      config.headers.set('X-API-Key', API_KEY);
       if (ANDROID_PACKAGE) config.headers.set('X-Android-Package', ANDROID_PACKAGE);
       if (ANDROID_CERT) config.headers.set('X-Android-Cert', ANDROID_CERT);
     } else {
-      config.headers['x-api-key'] = API_KEY;
-      config.headers['Authorization'] = `Bearer ${API_KEY}`;
+      config.headers['X-API-Key'] = API_KEY;
       if (ANDROID_PACKAGE) config.headers['X-Android-Package'] = ANDROID_PACKAGE;
       if (ANDROID_CERT) config.headers['X-Android-Cert'] = ANDROID_CERT;
     }
